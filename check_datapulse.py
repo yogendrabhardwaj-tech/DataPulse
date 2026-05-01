@@ -1650,8 +1650,8 @@ tr:last-child td{{border-bottom:none}}
 <div id="tab-viewdata" class="panel">
   <div class="card">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-      <button class="vd-btn active" id="vd-src-btn" onclick="showVD('source',this)">View Source Data</button>
-      <button class="vd-btn" id="vd-dst-btn" onclick="showVD('destination',this)">View Destination Data</button>
+      <button class="vd-btn active" id="vd-src-btn" onclick="showVD('source',this)">Source Data&nbsp;<span id="vd-src-cnt" style="font-size:.72rem;font-weight:700;background:rgba(255,255,255,.13);border-radius:20px;padding:1px 8px;letter-spacing:.01em"></span></button>
+      <button class="vd-btn" id="vd-dst-btn" onclick="showVD('destination',this)">Destination Data&nbsp;<span id="vd-dst-cnt" style="font-size:.72rem;font-weight:700;background:rgba(255,255,255,.13);border-radius:20px;padding:1px 8px;letter-spacing:.01em"></span></button>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
         <span style="color:#7a8eaf;font-size:.77rem">Rows per page:</span>
         <select id="vd-rpp" onchange="vdRppChange()" style="background:#07102a;border:1px solid #182040;border-radius:7px;padding:4px 10px;color:#e2e8f5;font-size:.77rem;outline:none"></select>
@@ -1662,22 +1662,22 @@ tr:last-child td{{border-bottom:none}}
       <div id="vd-lc-mismatch" class="vd-lc" onclick="vdLegendFilter('mismatch',this)" title="Click to filter — click again to clear" style="background:rgba(239,68,68,0.09);border:1px solid rgba(239,68,68,0.3)">
         <span class="vd-lc-badge">ON</span>
         <span style="width:10px;height:10px;border-radius:3px;background:rgba(239,68,68,0.7);flex-shrink:0;margin-top:3px"></span>
-        <div><div style="font-size:.74rem;font-weight:700;color:#fca5a5">Value Mismatch</div><div style="font-size:.66rem;color:#7a8eaf;margin-top:1px">Matched but columns differ</div></div>
+        <div><div style="font-size:.74rem;font-weight:700;color:#fca5a5">Value Mismatch&nbsp;<span id="vd-cnt-mismatch" style="font-size:.7rem;background:rgba(239,68,68,.18);color:#fca5a5;border-radius:20px;padding:1px 7px"></span></div><div style="font-size:.66rem;color:#7a8eaf;margin-top:1px">Matched but columns differ</div></div>
       </div>
       <div id="vd-lc-green" class="vd-lc" onclick="vdLegendFilter('green',this)" title="Click to filter — click again to clear" style="background:rgba(16,185,129,0.09);border:1px solid rgba(16,185,129,0.3)">
         <span class="vd-lc-badge">ON</span>
         <span style="width:10px;height:10px;border-radius:3px;background:rgba(16,185,129,0.7);flex-shrink:0;margin-top:3px"></span>
-        <div><div style="font-size:.74rem;font-weight:700;color:#6ee7b7">Missing in Destination</div><div style="font-size:.66rem;color:#7a8eaf;margin-top:1px">Source key not in destination</div></div>
+        <div><div id="vd-lbl-green" style="font-size:.74rem;font-weight:700;color:#6ee7b7">Missing in Destination&nbsp;<span id="vd-cnt-green" style="font-size:.7rem;background:rgba(16,185,129,.18);color:#6ee7b7;border-radius:20px;padding:1px 7px"></span></div><div id="vd-sub-green" style="font-size:.66rem;color:#7a8eaf;margin-top:1px">Source key not in destination</div></div>
       </div>
       <div id="vd-lc-skyblue" class="vd-lc" onclick="vdLegendFilter('skyblue',this)" title="Click to filter — click again to clear" style="background:rgba(56,189,248,0.09);border:1px solid rgba(56,189,248,0.3)">
         <span class="vd-lc-badge">ON</span>
         <span style="width:10px;height:10px;border-radius:3px;background:rgba(56,189,248,0.7);flex-shrink:0;margin-top:3px"></span>
-        <div><div style="font-size:.74rem;font-weight:700;color:#38bdf8">Extra in Destination</div><div style="font-size:.66rem;color:#7a8eaf;margin-top:1px">Destination key not in source</div></div>
+        <div><div id="vd-lbl-skyblue" style="font-size:.74rem;font-weight:700;color:#38bdf8">Extra in Destination&nbsp;<span id="vd-cnt-skyblue" style="font-size:.7rem;background:rgba(56,189,248,.18);color:#38bdf8;border-radius:20px;padding:1px 7px"></span></div><div id="vd-sub-skyblue" style="font-size:.66rem;color:#7a8eaf;margin-top:1px">Destination key not in source</div></div>
       </div>
       <div id="vd-lc-pass" class="vd-lc" onclick="vdLegendFilter('pass',this)" title="Click to filter — click again to clear" style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2)">
         <span class="vd-lc-badge">ON</span>
         <span style="width:10px;height:10px;border-radius:3px;background:#1e2d42;border:1px solid #2d3c56;flex-shrink:0;margin-top:3px"></span>
-        <div><div style="font-size:.74rem;font-weight:700;color:#818cf8">No Issue</div><div style="font-size:.66rem;color:#7a8eaf;margin-top:1px">All column values passed</div></div>
+        <div><div style="font-size:.74rem;font-weight:700;color:#818cf8">No Issue&nbsp;<span id="vd-cnt-pass" style="font-size:.7rem;background:rgba(99,102,241,.18);color:#818cf8;border-radius:20px;padding:1px 7px"></span></div><div style="font-size:.66rem;color:#7a8eaf;margin-top:1px">All column values passed</div></div>
       </div>
     </div>
     <div style="overflow-x:auto;margin-bottom:12px">
@@ -2297,6 +2297,25 @@ function showVD(which,el){{
   const hiddenSet=which==='source'?_srcHidden:_dstHidden;const allRows=which==='source'?SRC_DATA.rows:DST_DATA.rows;
   vd_data=hiddenSet.size?allRows.filter(r=>!hiddenSet.has(r._row_idx)):allRows;
   vd_cols=buildVDCols(which);vd_sk=null;vd_sd=1;vd_page=1;buildVDRpp();buildVDFilters();applyVDFilter();
+  const isSrc=which==='source';
+  // Button record counts
+  const srcN=(SRC_DATA.rows||[]).length-_srcHidden.size;
+  const dstN=(DST_DATA.rows||[]).length-_dstHidden.size;
+  const sc=document.getElementById('vd-src-cnt');const dc=document.getElementById('vd-dst-cnt');
+  if(sc)sc.textContent=srcN.toLocaleString();
+  if(dc)dc.textContent=dstN.toLocaleString();
+  // Flip green/skyblue labels based on perspective
+  const lg=document.getElementById('vd-lbl-green'),sg=document.getElementById('vd-sub-green');
+  const lb=document.getElementById('vd-lbl-skyblue'),sb=document.getElementById('vd-sub-skyblue');
+  if(lg){{const cg=document.getElementById('vd-cnt-green');lg.childNodes[0].textContent=isSrc?'Missing in Destination\u00a0':'Missing in Source\u00a0';if(sg)sg.textContent=isSrc?'Source key not in destination':'Destination key not in source';}}
+  if(lb){{lb.childNodes[0].textContent=isSrc?'Extra in Destination\u00a0':'Extra in Source\u00a0';if(sb)sb.textContent=isSrc?'Destination key not in source':'Source key not in destination';}}
+  // Legend counts from mode-filtered vd_data
+  const statusMap=isSrc?srcRowStatus:dstRowStatus;
+  const _gSt=new Set(['missing_in_dest','migration_src']);const _bSt=new Set(['missing_in_source','migration_dst']);
+  let cM=0,cG=0,cB=0,cP=0;
+  vd_data.forEach(r=>{{const st=statusMap[r._row_idx];if(st==='mismatch')cM++;else if(_gSt.has(st))cG++;else if(_bSt.has(st))cB++;else cP++;}});
+  const _sb=(id,n)=>{{const e=document.getElementById(id);if(e)e.textContent=n?n.toLocaleString():'0';}};
+  _sb('vd-cnt-mismatch',cM);_sb('vd-cnt-green',cG);_sb('vd-cnt-skyblue',cB);_sb('vd-cnt-pass',cP);
 }}
 function buildVDRpp(){{
   const n=vd_data.length,opts=[10,25,50];
