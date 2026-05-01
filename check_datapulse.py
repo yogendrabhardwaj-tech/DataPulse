@@ -52,6 +52,13 @@ MATCH_MODE      = "leftout"                         # Comparison scope (case-ins
 RUN_MODE        = "TEST"                            # "TEST" – shows corruption_summary.txt on Mappings tab
                                                     # Any other value – hides it (use "PROD" for production)
 
+# CSV separator characters for each input file type.
+# Use "," for standard CSV, "|" for pipe-delimited, "\t" for tab-delimited, etc.
+SOURCE_SEP      = ","   # Separator for source data CSV file(s)
+DEST_SEP        = ","   # Separator for destination data CSV file(s)
+COLMAP_SEP      = ","   # Separator for column_mapping.csv
+VALMAP_SEP      = ","   # Separator for value_mapping.csv
+
 # ---------------------------------------------------------------------------
 # Transformation engine
 # ---------------------------------------------------------------------------
@@ -215,17 +222,17 @@ def _ci_has(row: Dict, col: str) -> bool:
 # CSV loaders
 # ---------------------------------------------------------------------------
 
-def _load_csv(path: str) -> Tuple[List[str], List[Dict]]:
+def _load_csv(path: str, delimiter: str = ',') -> Tuple[List[str], List[Dict]]:
     if not os.path.exists(path):
         raise FileNotFoundError(f'File not found: {path}')
     with open(path, newline='', encoding='utf-8-sig') as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f, delimiter=delimiter)
         headers = list(reader.fieldnames or [])
         rows = [dict(r) for r in reader]
     return headers, rows
 
 
-def _load_folder_csv(folder: str, label: str = 'folder') -> Tuple[List[str], List[Dict], List[str]]:
+def _load_folder_csv(folder: str, label: str = 'folder', delimiter: str = ',') -> Tuple[List[str], List[Dict], List[str]]:
     """Find all .csv files in *folder*, validate consistent schema, and merge into one dataset.
 
     Returns (headers, merged_rows, loaded_file_paths).
@@ -257,7 +264,7 @@ def _load_folder_csv(folder: str, label: str = 'folder') -> Tuple[List[str], Lis
     for fname in all_files:
         fpath = os.path.join(folder, fname)
         try:
-            headers, rows = _load_csv(fpath)
+            headers, rows = _load_csv(fpath, delimiter=delimiter)
         except Exception as exc:
             raise FileNotFoundError(f'Failed to read {fpath}: {exc}') from exc
 
@@ -296,8 +303,8 @@ def _load_folder_csv(folder: str, label: str = 'folder') -> Tuple[List[str], Lis
     return ref_headers or [], merged_rows, loaded_paths
 
 
-def _load_column_mapping(path: str) -> List[Dict]:
-    _, rows = _load_csv(path)
+def _load_column_mapping(path: str, delimiter: str = ',') -> List[Dict]:
+    _, rows = _load_csv(path, delimiter=delimiter)
     required = {'source_column', 'destination_column', 'matching_rule'}
     if rows:
         missing = required - set(rows[0].keys())
@@ -309,8 +316,8 @@ def _load_column_mapping(path: str) -> List[Dict]:
     return rows
 
 
-def _load_value_mapping(path: str) -> Dict[str, Dict[str, str]]:
-    _, rows = _load_csv(path)
+def _load_value_mapping(path: str, delimiter: str = ',') -> Dict[str, Dict[str, str]]:
+    _, rows = _load_csv(path, delimiter=delimiter)
     result: Dict[str, Dict[str, str]] = defaultdict(dict)
     if not rows:
         return result
@@ -607,6 +614,10 @@ def validate(
     key_cols_override: Optional[List[str]] = None,
     output_format: str = 'both',
     match_mode: str = 'full',
+    source_sep: str = ',',
+    dest_sep: str = ',',
+    colmap_sep: str = ',',
+    valmap_sep: str = ',',
 ) -> Dict:
     """Run the full validation pipeline and write output files.
 
@@ -622,21 +633,21 @@ def validate(
 
     # ── Load inputs ───────────────────────────────────────────────────────
     print(f'[INFO] Loading source folder      : {source_folder}')
-    src_headers, src_rows, src_files = _load_folder_csv(source_folder, 'source')
+    src_headers, src_rows, src_files = _load_folder_csv(source_folder, 'source', delimiter=source_sep)
     print(f'[INFO]   Total: {len(src_rows):,} rows, {len(src_headers)} columns across '
           f'{len(src_files)} file(s)')
 
     print(f'[INFO] Loading destination folder : {dest_folder}')
-    dst_headers, dst_rows, dst_files = _load_folder_csv(dest_folder, 'destination')
+    dst_headers, dst_rows, dst_files = _load_folder_csv(dest_folder, 'destination', delimiter=dest_sep)
     print(f'[INFO]   Total: {len(dst_rows):,} rows, {len(dst_headers)} columns across '
           f'{len(dst_files)} file(s)')
 
     print(f'[INFO] Loading column map   : {colmap_path}')
-    col_mapping = _load_column_mapping(colmap_path)
+    col_mapping = _load_column_mapping(colmap_path, delimiter=colmap_sep)
     print(f'[INFO]   {len(col_mapping)} mapped column(s)')
 
     print(f'[INFO] Loading value map    : {valmap_path}')
-    val_mapping = _load_value_mapping(valmap_path)
+    val_mapping = _load_value_mapping(valmap_path, delimiter=valmap_sep)
     total_val_rules = sum(len(v) for v in val_mapping.values())
     print(f'[INFO]   {total_val_rules} value rule(s) across {len(val_mapping)} column(s)')
 
@@ -2503,18 +2514,26 @@ OUTPUTS (written to --outdir)
   dashboard.html            self-contained interactive HTML dashboard
 """
     )
-    parser.add_argument('--source',    default=SOURCE_FOLDER, help='Folder containing source CSV file(s) — all .csv files are merged')
-    parser.add_argument('--dest',      default=DEST_FOLDER,   help='Folder containing destination CSV file(s) — all .csv files are merged')
-    parser.add_argument('--colmap',    default=COLMAP_PATH,   help='Path to column_mapping.csv')
-    parser.add_argument('--valmap',    default=VALMAP_PATH,   help='Path to value_mapping.csv')
-    parser.add_argument('--outdir',    default=OUTPUT_DIR,    help='Output directory (default: output)')
-    parser.add_argument('--format',    default=OUTPUT_FORMAT, choices=['json', 'csv', 'both'],
+    parser.add_argument('--source',     default=SOURCE_FOLDER, help='Folder containing source CSV file(s) — all .csv files are merged')
+    parser.add_argument('--dest',       default=DEST_FOLDER,   help='Folder containing destination CSV file(s) — all .csv files are merged')
+    parser.add_argument('--colmap',     default=COLMAP_PATH,   help='Path to column_mapping.csv')
+    parser.add_argument('--valmap',     default=VALMAP_PATH,   help='Path to value_mapping.csv')
+    parser.add_argument('--outdir',     default=OUTPUT_DIR,    help='Output directory (default: output)')
+    parser.add_argument('--format',     default=OUTPUT_FORMAT, choices=['json', 'csv', 'both'],
                         help='Output format (default: both)')
-    parser.add_argument('--tolerance', type=float, default=TOLERANCE,
+    parser.add_argument('--tolerance',  type=float, default=TOLERANCE,
                         help='Numeric comparison tolerance (default: 0.01)')
-    parser.add_argument('--key-cols',  nargs='+', metavar='COL', default=KEY_COLS,
+    parser.add_argument('--key-cols',   nargs='+', metavar='COL', default=KEY_COLS,
                         help='Override composite key source columns (space-separated). '
                              'If omitted, uses is_key=true rows in column_mapping.csv.')
+    parser.add_argument('--source-sep', default=SOURCE_SEP,
+                        help='Field separator for source CSV files (default: ,)')
+    parser.add_argument('--dest-sep',   default=DEST_SEP,
+                        help='Field separator for destination CSV files (default: ,)')
+    parser.add_argument('--colmap-sep', default=COLMAP_SEP,
+                        help='Field separator for column_mapping.csv (default: ,)')
+    parser.add_argument('--valmap-sep', default=VALMAP_SEP,
+                        help='Field separator for value_mapping.csv (default: ,)')
     parser.add_argument('mode', nargs='?', default=MATCH_MODE,
                         help='Comparison scope (case-insensitive): '
                              'full=all records; '
@@ -2535,6 +2554,10 @@ OUTPUTS (written to --outdir)
             key_cols_override=args.key_cols,
             output_format=args.format,
             match_mode=args.mode,
+            source_sep=args.source_sep,
+            dest_sep=args.dest_sep,
+            colmap_sep=args.colmap_sep,
+            valmap_sep=args.valmap_sep,
         )
     except (FileNotFoundError, ValueError) as exc:
         print(f'[ERROR] {exc}', file=sys.stderr)
