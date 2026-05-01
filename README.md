@@ -1,4 +1,4 @@
-# CSV Data Validation Engine
+# DataPulse Checker - Data Validation Engine
 
 A generalized Python tool for comparing any source and destination CSV pair during data migration or ETL processes. Schema is driven entirely by two mapping files — no changes to `validate.py` are needed when switching datasets.
 
