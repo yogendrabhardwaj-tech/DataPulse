@@ -1,0 +1,17 @@
+column_name,source_value,destination_value,rule_description
+Program_Status,ENROLLED,01,Student currently enrolled
+Program_Status,COMPLETED,03,Student successfully completed program
+Program_Status,DROPPED,04,Student dropped from program
+
+Exam_Result,PASS,P,Exam passed
+Exam_Result,FAIL,F,Exam failed
+
+Training_Mode,CLASSROOM,CR,Classroom-based training
+Training_Mode,ONLINE,ON,Online training
+Training_Mode,HYBRID,HY,Hybrid training model
+
+Scholarship_Eligible,YES,1,Student eligible for scholarship
+Scholarship_Eligible,NO,0,Student not eligible for scholarship
+,,,
+Enrollment_Date,yyyy-mm-dd,dd-MMM-yyyy,Enrollment_Date
+,,,

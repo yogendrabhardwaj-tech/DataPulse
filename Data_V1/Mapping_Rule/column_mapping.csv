@@ -1,0 +1,11 @@
+source_column,destination_column,matching_rule,is_key
+emp_id,employee_key,STRIP_PREFIX:E,true
+full_name,emp_name,DIRECT,false
+employment_status,status_cd,VALUE_MAP,false
+result_flag,result_cd,VALUE_MAP,false
+course_type,crs_typ_cd,VALUE_MAP,false
+course_number,crs_no,STRIP_PREFIX:C-,true
+course_year,yr,DIRECT,true
+course_fee,fee_amt,NUMERIC,false
+join_date,start_dt,DATE_FORMAT:YYYY-MM-DD->DD-MMM-YYYY,false
+is_active,active_ind,VALUE_MAP,false

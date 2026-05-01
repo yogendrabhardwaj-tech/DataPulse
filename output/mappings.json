@@ -1,0 +1,158 @@
+{
+  "column_mapping": [
+    {
+      "source_column": "Customer_ID",
+      "destination_column": "cust_key",
+      "matching_rule": "STRIP_PREFIX:CUST|NUMERIC",
+      "is_key": "True"
+    },
+    {
+      "source_column": "CD_Number",
+      "destination_column": "cd_key",
+      "matching_rule": "STRIP_PREFIX:CD-|NUMERIC",
+      "is_key": "True"
+    },
+    {
+      "source_column": "Issue_Date",
+      "destination_column": "issue_dt",
+      "matching_rule": "DATE_FORMAT:YYYY-MM-DD->DD-MMM-YYYY",
+      "is_key": "True"
+    },
+    {
+      "source_column": "Term_Months",
+      "destination_column": "term_mo",
+      "matching_rule": "NUMERIC",
+      "is_key": "False"
+    },
+    {
+      "source_column": "Principal_Amount",
+      "destination_column": "principal_amt",
+      "matching_rule": "NUMERIC",
+      "is_key": "False"
+    },
+    {
+      "source_column": "Interest_Rate",
+      "destination_column": "rate_pct",
+      "matching_rule": "NUMERIC",
+      "is_key": "False"
+    },
+    {
+      "source_column": "Interest_Payout_Frequency",
+      "destination_column": "payout_freq_cd",
+      "matching_rule": "VALUE_MAP",
+      "is_key": "False"
+    },
+    {
+      "source_column": "Rate_Type",
+      "destination_column": "rate_type_cd",
+      "matching_rule": "VALUE_MAP",
+      "is_key": "False"
+    },
+    {
+      "source_column": "Auto_Renew",
+      "destination_column": "auto_renew_ind",
+      "matching_rule": "VALUE_MAP",
+      "is_key": "False"
+    },
+    {
+      "source_column": "Status",
+      "destination_column": "status_cd",
+      "matching_rule": "VALUE_MAP",
+      "is_key": "False"
+    },
+    {
+      "source_column": "Branch_Code",
+      "destination_column": "branch_id",
+      "matching_rule": "STRIP_PREFIX:BR-|NUMERIC",
+      "is_key": "False"
+    },
+    {
+      "source_column": "Currency",
+      "destination_column": "ccy_cd",
+      "matching_rule": "DIRECT",
+      "is_key": "False"
+    },
+    {
+      "source_column": "Interest_Accrual_Method",
+      "destination_column": "accrual_cd",
+      "matching_rule": "VALUE_MAP",
+      "is_key": "False"
+    },
+    {
+      "source_column": "Brokered_Flag",
+      "destination_column": "brokered_ind",
+      "matching_rule": "VALUE_MAP",
+      "is_key": "False"
+    }
+  ],
+  "value_mapping": {
+    "Interest_Payout_Frequency": [
+      {
+        "source_value": "MONTHLY",
+        "destination_value": "M"
+      },
+      {
+        "source_value": "QUARTERLY",
+        "destination_value": "Q"
+      },
+      {
+        "source_value": "AT_MATURITY",
+        "destination_value": "A"
+      }
+    ],
+    "Rate_Type": [
+      {
+        "source_value": "FIXED",
+        "destination_value": "F"
+      },
+      {
+        "source_value": "VARIABLE",
+        "destination_value": "V"
+      }
+    ],
+    "Auto_Renew": [
+      {
+        "source_value": "YES",
+        "destination_value": "1"
+      },
+      {
+        "source_value": "NO",
+        "destination_value": "0"
+      }
+    ],
+    "Status": [
+      {
+        "source_value": "ACTIVE",
+        "destination_value": "A"
+      },
+      {
+        "source_value": "MATURED",
+        "destination_value": "M"
+      },
+      {
+        "source_value": "CLOSED",
+        "destination_value": "C"
+      }
+    ],
+    "Interest_Accrual_Method": [
+      {
+        "source_value": "30_360",
+        "destination_value": "30360"
+      },
+      {
+        "source_value": "ACT_365",
+        "destination_value": "ACT365"
+      }
+    ],
+    "Brokered_Flag": [
+      {
+        "source_value": "YES",
+        "destination_value": "1"
+      },
+      {
+        "source_value": "NO",
+        "destination_value": "0"
+      }
+    ]
+  }
+}

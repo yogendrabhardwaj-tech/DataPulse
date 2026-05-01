@@ -1,0 +1,11 @@
+column_name,source_value,destination_value,rule_description
+employment_status,NEW,01,New employee status maps to code 01
+employment_status,PENDING,02,Pending status maps to code 02
+employment_status,COMPLETED,03,Completed status maps to code 03
+result_flag,TRUE,Y,Boolean TRUE maps to Y
+result_flag,FALSE,N,Boolean FALSE maps to N
+course_type,CLASSROOM,CR,Classroom course type maps to CR
+course_type,ONLINE,ON,Online course type maps to ON
+course_type,WEEKEND,WK,Weekend course type maps to WK
+is_active,YES,1,Active YES maps to 1
+is_active,NO,0,Inactive NO maps to 0

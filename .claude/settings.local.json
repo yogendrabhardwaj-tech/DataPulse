@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python validate.py --source data/employee_source.csv --dest data/employee_destination.csv --colmap Mapping_Rule/column_mapping.csv --valmap Mapping_Rule/value_mapping.csv --outdir output --format both --tolerance 0.01)",
+      "Bash(python -c \"import json; d=json.load\\(open\\('output/validation_results.json'\\)\\); print\\(json.dumps\\(d['summary'], indent=2\\)\\)\")",
+      "Bash(python validate.py --source data/employee_source.csv --dest data/employee_destination.csv --colmap Mapping_Rule/column_mapping.csv --valmap Mapping_Rule/value_mapping.csv --outdir output --format both)",
+      "Bash(python -c ':*)",
+      "Bash(python validate.py)",
+      "Bash(python:*)",
+      "Bash(where python:*)",
+      "Bash(mkdir -p /tmp/test_schema/src)",
+      "Bash(echo \"col_a,col_b\")",
+      "Bash(echo \"col_a,col_c\")",
+      "Bash(mkdir -p Data_Student/Source Data_Student/Destination)",
+      "Bash(cp Data_Student/employee_source.csv Data_Student/Source/)",
+      "Bash(cp Data_Student/employee_destination.csv Data_Student/Destination/)"
+    ]
+  }
+}
