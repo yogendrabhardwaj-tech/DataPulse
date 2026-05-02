@@ -4,9 +4,50 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A **generalized** CSV data validation engine (`check_datapulse.py`) that compares any source and destination CSV pair. Schema is driven entirely by two mapping files — no hardcoded column names. Produces JSON/CSV results and a self-contained HTML dashboard.
+Two complementary interfaces share the same validation engine (`check_datapulse.py`):
 
-## Quickest Way to Run
+| Interface | File | When to use |
+|---|---|---|
+| **Streamlit Wizard** | `app.py` | Interactive, guided end-to-end flow — build mappings, run validation, view results in browser |
+| **CLI Engine** | `check_datapulse.py` | Scripted/automated runs; takes folder paths as arguments or reads config block at top of file |
+
+---
+
+## Streamlit Wizard (`app.py`)
+
+### Start the wizard
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+Opens at `http://localhost:8501`. Six-step wizard:
+
+| Step | What happens |
+|---|---|
+| 1. Data Ingestion | Select source/destination folder paths and CSV separators; preview data, column summaries |
+| 2. Column Mapping | Pair source ↔ destination columns; interactive rule builder (all 10 rules + chaining); see distinct values per pair |
+| 3. Value Mapping | For each VALUE_MAP column: auto-generate rows from distinct source values; destination value dropdown populated from dest data |
+| 4. Review & Save | Final review tables; save `column_mapping.csv` and `value_mapping.csv` to `<base>/Mapping_Rule/`; in-browser download |
+| 5. Run Validation | Config overrides (match mode, tolerance, separators, run mode); runs `validate()` from engine; captures log output |
+| 6. Results | KPI metrics; filterable/searchable issues table; embedded interactive HTML dashboard; download buttons |
+
+### Architecture
+- `app.py` imports `validate()` directly from `check_datapulse.py` — zero duplication of engine logic.
+- All in-app data operations use `pandas`; the engine itself still uses the stdlib `csv` module.
+- Session state (`st.session_state`) drives wizard navigation; each step is a `_stepN()` function.
+- `@st.cache_data` on the folder loader prevents redundant re-reads across reruns.
+- The "Reset wizard" sidebar button clears all state and cache.
+
+### Dependencies
+```
+streamlit>=1.28.0
+pandas>=1.5.0
+```
+
+---
+
+## CLI Engine (`check_datapulse.py`) — Quickest Way to Run
 
 Edit the config block at the top of `check_datapulse.py` (lines ~36–52), then:
 
