@@ -19,7 +19,8 @@
       "Bash(C:\\\\dp\\\\Scripts\\\\pip install:*)",
       "Bash(cmd /c \"C:\\\\dp\\\\Scripts\\\\pip.exe install streamlit pandas\")",
       "Bash(cmd:*)",
-      "Bash(powershell -Command \"& 'C:\\\\dp\\\\Scripts\\\\pip.exe' install streamlit pandas 2>&1\")"
+      "Bash(powershell -Command \"& 'C:\\\\dp\\\\Scripts\\\\pip.exe' install streamlit pandas 2>&1\")",
+      "Bash(where streamlit *)"
     ]
   }
 }
