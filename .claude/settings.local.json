@@ -13,7 +13,9 @@
       "Bash(echo \"col_a,col_c\")",
       "Bash(mkdir -p Data_Student/Source Data_Student/Destination)",
       "Bash(cp Data_Student/employee_source.csv Data_Student/Source/)",
-      "Bash(cp Data_Student/employee_destination.csv Data_Student/Destination/)"
+      "Bash(cp Data_Student/employee_destination.csv Data_Student/Destination/)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)"
     ]
   }
 }
