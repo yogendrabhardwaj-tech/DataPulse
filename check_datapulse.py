@@ -8,12 +8,16 @@ Works with ANY source/destination CSV pair given:
 
 Supported matching_rule values:
   DIRECT                        trim + case-insensitive compare
+  TRIM                          strip leading/trailing whitespace only
+  UPPERCASE                     convert source value to uppercase before compare
+  LOWERCASE                     convert source value to lowercase before compare
   NUMERIC                       parse as float, compare within --tolerance
+  DECIMAL                       exact value match ignoring trailing zeros  e.g. 1200.50 == 1200.5
   VALUE_MAP                     look up source value in value_mapping.csv
   STRIP_PREFIX:<prefix>         remove leading prefix before compare  e.g. STRIP_PREFIX:E
+  ZEROPAD:<length>              left-pad with zeros to target length  e.g. ZEROPAD:12  (1001 → 000000001001)
   DATE_FORMAT:<src>-><dst>      convert date format                   e.g. DATE_FORMAT:YYYY-MM-DD->DD-MMM-YYYY
-  DECIMAL                       exact value match ignoring decimal place formatting  e.g. 1200.50 == 1200.5
-  Rules can be chained with |   e.g. STRIP_PREFIX:E|NUMERIC
+  Rules can be chained with |   e.g. STRIP_PREFIX:E|NUMERIC  or  STRIP_PREFIX:CUST|ZEROPAD:12  or  TRIM|UPPERCASE
 
 Supported date format tokens: YYYY-MM-DD, DD-MMM-YYYY, MM/DD/YYYY, DD/MM/YYYY,
                                YYYY/MM/DD, YYYYMMDD, DD-MM-YYYY, MM-DD-YYYY
@@ -33,7 +37,7 @@ from typing import Any, Dict, List, Optional, Tuple
 # ---------------------------------------------------------------------------
 # USER CONFIGURATION — update these values instead of passing CLI flags
 # ---------------------------------------------------------------------------
-folder_path     = "Currupt_Data"            # Base folder for all CSV files
+folder_path     = "Data_Folder_Template"            # Base folder for all CSV files
 SOURCE_FOLDER   = folder_path + "/Source"           # Folder containing source CSV file(s)
                                                     #   All .csv files in the folder are merged automatically
 DEST_FOLDER     = folder_path + "/Destination"      # Folder containing destination CSV file(s)
@@ -55,7 +59,7 @@ RUN_MODE        = "TEST"                            # "TEST" – shows corruptio
 # CSV separator characters for each input file type.
 # Use "," for standard CSV, "|" for pipe-delimited, "\t" for tab-delimited, etc.
 SOURCE_SEP      = ","   # Separator for source data CSV file(s)
-DEST_SEP        = ","   # Separator for destination data CSV file(s)
+DEST_SEP        = "|"   # Separator for destination data CSV file(s)
 COLMAP_SEP      = ","   # Separator for column_mapping.csv
 VALMAP_SEP      = ","   # Separator for value_mapping.csv
 
@@ -117,6 +121,15 @@ def apply_transformation(value: str, rule: str) -> Tuple[str, Optional[str]]:
             prefix = part[len('STRIP_PREFIX:'):]
             if val.upper().startswith(prefix.upper()):
                 val = val[len(prefix):]
+        elif up.startswith('ZEROPAD:'):
+            pad_spec = part[len('ZEROPAD:'):]
+            try:
+                target_len = int(pad_spec)
+                if target_len < 1:
+                    raise ValueError
+                val = val.zfill(target_len)
+            except ValueError:
+                error = f'ZEROPAD requires a positive integer length, got "{pad_spec}"'
         elif up.startswith('DATE_FORMAT:'):
             fmt_spec = part[len('DATE_FORMAT:'):]
             if '->' not in fmt_spec:
@@ -1655,6 +1668,365 @@ tr:last-child td{{border-bottom:none}}
       </table></div>
     </div>
   </div>
+
+  <!-- RULE GUIDE -->
+  <div class="card" style="margin-top:4px">
+    <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none" onclick="var b=document.getElementById('rg-body'),o=b.style.display==='none';b.style.display=o?'block':'none';document.getElementById('rg-arr').style.transform=o?'rotate(0deg)':'rotate(-90deg)'">
+      <h3 style="margin-bottom:0;display:flex;align-items:center;gap:8px">
+        <span style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-radius:5px;padding:2px 9px;font-size:.63rem;letter-spacing:.09em;font-weight:700">GUIDE</span>
+        Column Mapping Rule Reference
+      </h3>
+      <span id="rg-arr" style="color:#6366f1;font-size:1.1rem;transition:transform .2s;display:inline-block">&#9660;</span>
+    </div>
+    <div id="rg-body" style="margin-top:20px">
+
+      <!-- FILE FORMATS -->
+      <div style="margin-bottom:26px">
+        <div style="font-size:.71rem;font-weight:700;color:#818cf8;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #182040">Mapping File Formats</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div style="background:#07102a;border:1px solid #182040;border-radius:9px;padding:14px 16px">
+            <div style="font-size:.7rem;font-weight:700;color:#9aafc8;margin-bottom:8px;letter-spacing:.04em">column_mapping.csv</div>
+            <div style="font-family:monospace;font-size:.73rem;color:#c5d1e8;line-height:1.9">
+              <span style="color:#7a8eaf">Required columns:</span><br>
+              <span style="color:#818cf8">source_column</span>, <span style="color:#818cf8">destination_column</span>, <span style="color:#818cf8">matching_rule</span>, <span style="color:#6ee7b7">is_key</span><br>
+              <span style="color:#7a8eaf">Example rows:</span><br>
+              <span style="color:#c5d1e8">Customer_ID, cust_key, STRIP_PREFIX:CUST|NUMERIC, false</span><br>
+              <span style="color:#c5d1e8">CD_Number, cd_key, STRIP_PREFIX:CD-|NUMERIC, <span style="color:#6ee7b7">true</span></span>
+            </div>
+            <div style="margin-top:10px;font-size:.68rem;color:#7a8eaf;line-height:1.65">
+              Set <span style="color:#6ee7b7;font-weight:700">is_key = true</span> on columns that together uniquely identify a record (composite key). All key columns combined must be unique per row. Column name matching is case-insensitive and whitespace-tolerant.
+            </div>
+          </div>
+          <div style="background:#07102a;border:1px solid #182040;border-radius:9px;padding:14px 16px">
+            <div style="font-size:.7rem;font-weight:700;color:#9aafc8;margin-bottom:8px;letter-spacing:.04em">value_mapping.csv</div>
+            <div style="font-family:monospace;font-size:.73rem;color:#c5d1e8;line-height:1.9">
+              <span style="color:#7a8eaf">Required columns:</span><br>
+              <span style="color:#818cf8">column_name</span>, <span style="color:#818cf8">source_value</span>, <span style="color:#818cf8">destination_value</span><br>
+              <span style="color:#7a8eaf">Example rows (Interest_Payout_Frequency):</span><br>
+              <span style="color:#c5d1e8">Interest_Payout_Frequency, MONTHLY, M</span><br>
+              <span style="color:#c5d1e8">Interest_Payout_Frequency, QUARTERLY, Q</span><br>
+              <span style="color:#c5d1e8">Interest_Payout_Frequency, AT_MATURITY, A</span>
+            </div>
+            <div style="margin-top:10px;font-size:.68rem;color:#7a8eaf;line-height:1.65">
+              Required only when <span style="color:#a5b4fc;font-family:monospace">matching_rule = VALUE_MAP</span>. One row per source&#8594;destination substitution. The <span style="color:#818cf8">column_name</span> must match the <span style="color:#818cf8">source_column</span> from column_mapping.csv (case-insensitive).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RULES REFERENCE -->
+      <div style="margin-bottom:26px">
+        <div style="font-size:.71rem;font-weight:700;color:#818cf8;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #182040">Matching Rules Reference</div>
+        <div class="tbl-wrap" style="max-height:none">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:20%">Rule</th>
+                <th style="width:32%">What It Does</th>
+                <th style="width:24%">Example &nbsp;(source &#8594; result)</th>
+                <th style="width:24%">When to Use</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span style="font-family:monospace;font-size:.79rem;color:#a5b4fc;background:#0e1830;padding:3px 8px;border-radius:4px;border:1px solid #1e2d54;white-space:nowrap">DIRECT</span></td>
+                <td style="font-size:.77rem;color:#c5d1e8">Trims leading/trailing whitespace, then compares case-insensitively. No value transformation applied.</td>
+                <td style="font-family:monospace;font-size:.75rem"><span style="color:#fbbf24">USD</span> &#8594; <span style="color:#6ee7b7">USD</span><br><span style="color:#fbbf24"> Active </span> &#8594; <span style="color:#6ee7b7">active</span></td>
+                <td style="font-size:.74rem;color:#7a8eaf">Plain text columns — currency codes, country codes, names — that are identical in both systems (case or spacing may differ).</td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:.79rem;color:#a5b4fc;background:#0e1830;padding:3px 8px;border-radius:4px;border:1px solid #1e2d54;white-space:nowrap">TRIM</span></td>
+                <td style="font-size:.77rem;color:#c5d1e8">Strips leading and trailing whitespace from the source value. Equivalent to DIRECT when used alone; useful as an explicit first step in a chain.</td>
+                <td style="font-family:monospace;font-size:.75rem"><span style="color:#fbbf24">&nbsp; USD &nbsp;</span> &#8594; <span style="color:#6ee7b7">USD</span></td>
+                <td style="font-size:.74rem;color:#7a8eaf">Use at the start of a chain when source values may have padding spaces before another rule is applied (e.g. <span style="font-family:monospace">TRIM|NUMERIC</span>).</td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:.79rem;color:#a5b4fc;background:#0e1830;padding:3px 8px;border-radius:4px;border:1px solid #1e2d54;white-space:nowrap">UPPERCASE</span></td>
+                <td style="font-size:.77rem;color:#c5d1e8">Converts the source value to all uppercase letters before comparing.</td>
+                <td style="font-family:monospace;font-size:.75rem"><span style="color:#fbbf24">active</span> &#8594; <span style="color:#6ee7b7">ACTIVE</span><br><span style="color:#fbbf24">New York</span> &#8594; <span style="color:#6ee7b7">NEW YORK</span></td>
+                <td style="font-size:.74rem;color:#7a8eaf">Source stores mixed or lowercase text; destination stores uppercase. Can be chained (e.g. <span style="font-family:monospace">TRIM|UPPERCASE</span>).</td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:.79rem;color:#a5b4fc;background:#0e1830;padding:3px 8px;border-radius:4px;border:1px solid #1e2d54;white-space:nowrap">LOWERCASE</span></td>
+                <td style="font-size:.77rem;color:#c5d1e8">Converts the source value to all lowercase letters before comparing.</td>
+                <td style="font-family:monospace;font-size:.75rem"><span style="color:#fbbf24">ACTIVE</span> &#8594; <span style="color:#6ee7b7">active</span><br><span style="color:#fbbf24">New York</span> &#8594; <span style="color:#6ee7b7">new york</span></td>
+                <td style="font-size:.74rem;color:#7a8eaf">Source stores mixed or uppercase text; destination stores lowercase. Can be chained (e.g. <span style="font-family:monospace">TRIM|LOWERCASE</span>).</td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:.79rem;color:#a5b4fc;background:#0e1830;padding:3px 8px;border-radius:4px;border:1px solid #1e2d54;white-space:nowrap">NUMERIC</span></td>
+                <td style="font-size:.77rem;color:#c5d1e8">Parses both sides as floating-point numbers and compares within the configured tolerance (default 0.01). Whole-number results drop the decimal.</td>
+                <td style="font-family:monospace;font-size:.75rem"><span style="color:#fbbf24">5.2500</span> &#8594; <span style="color:#6ee7b7">5.25</span><br><span style="color:#fbbf24">12.00</span> &#8594; <span style="color:#6ee7b7">12</span><br><span style="color:#fbbf24">001234</span> &#8594; <span style="color:#6ee7b7">1234</span></td>
+                <td style="font-size:.74rem;color:#7a8eaf">Interest rates, amounts, term months, counts — any number where precision or leading zeros may differ between systems.</td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:.79rem;color:#a5b4fc;background:#0e1830;padding:3px 8px;border-radius:4px;border:1px solid #1e2d54;white-space:nowrap">DECIMAL</span></td>
+                <td style="font-size:.77rem;color:#c5d1e8">Strips trailing zeros then compares exactly. 1200.50 equals 1200.5 — but 1200.51 does not. Stricter than NUMERIC (no tolerance band).</td>
+                <td style="font-family:monospace;font-size:.75rem"><span style="color:#fbbf24">899.90</span> &#8594; <span style="color:#6ee7b7">899.9</span><br><span style="color:#fbbf24">1200.00</span> &#8594; <span style="color:#6ee7b7">1200</span></td>
+                <td style="font-size:.74rem;color:#7a8eaf">Financial amounts where the exact value must match but trailing-zero formatting differs (e.g. Oracle vs SQL Server decimal storage).</td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:.79rem;color:#a5b4fc;background:#0e1830;padding:3px 8px;border-radius:4px;border:1px solid #1e2d54;white-space:nowrap">VALUE_MAP</span></td>
+                <td style="font-size:.77rem;color:#c5d1e8">Looks up the source value in value_mapping.csv and substitutes the mapped destination value before comparing. Reports VALUE_MAPPING_MISSING if no entry exists.</td>
+                <td style="font-family:monospace;font-size:.75rem"><span style="color:#fbbf24">MONTHLY</span> &#8594; <span style="color:#6ee7b7">M</span><br><span style="color:#fbbf24">ACTIVE</span> &#8594; <span style="color:#6ee7b7">A</span><br><span style="color:#fbbf24">YES</span> &#8594; <span style="color:#6ee7b7">1</span></td>
+                <td style="font-size:.74rem;color:#7a8eaf">Source uses descriptive text / long codes; destination uses short codes or numeric flags. Requires entries in value_mapping.csv for every possible source value.</td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:.79rem;color:#a5b4fc;background:#0e1830;padding:3px 8px;border-radius:4px;border:1px solid #1e2d54;white-space:nowrap">STRIP_PREFIX:&lt;p&gt;</span></td>
+                <td style="font-size:.77rem;color:#c5d1e8">Removes the leading prefix <em>p</em> from the source value (case-insensitive). The remainder is kept as-is and passed to the next rule in the chain.</td>
+                <td style="font-family:monospace;font-size:.75rem"><span style="color:#fbbf24">CUST001234</span> &#8594; <span style="color:#6ee7b7">001234</span><br><span style="color:#fbbf24">BR-001</span> &#8594; <span style="color:#6ee7b7">001</span><br><span style="color:#fbbf24">CD-1000001</span> &#8594; <span style="color:#6ee7b7">1000001</span></td>
+                <td style="font-size:.74rem;color:#7a8eaf">Source IDs carry a system prefix that destination omits. Chain with NUMERIC to also strip leading zeros, or with ZEROPAD to pad to a fixed length.</td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:.79rem;color:#a5b4fc;background:#0e1830;padding:3px 8px;border-radius:4px;border:1px solid #1e2d54;white-space:nowrap">ZEROPAD:&lt;N&gt;</span></td>
+                <td style="font-size:.77rem;color:#c5d1e8">Left-pads the value with zeros until it is exactly N characters long. If the value is already N or more characters it is not changed.</td>
+                <td style="font-family:monospace;font-size:.75rem"><span style="color:#fbbf24">1001</span> &#8594; <span style="color:#6ee7b7">0000001001</span> (N=10)<br><span style="color:#fbbf24">CUST1001</span> &#8594; <span style="color:#6ee7b7">000000001001</span> (strip+pad)</td>
+                <td style="font-size:.74rem;color:#7a8eaf">Destination stores fixed-width zero-padded IDs. Chain after STRIP_PREFIX when the source also has a text prefix.</td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:.79rem;color:#a5b4fc;background:#0e1830;padding:3px 8px;border-radius:4px;border:1px solid #1e2d54;white-space:nowrap">DATE_FORMAT:<br>&lt;src&gt;-&gt;&lt;dst&gt;</span></td>
+                <td style="font-size:.77rem;color:#c5d1e8">Parses the source date using the <em>src</em> token and reformats it using the <em>dst</em> token before comparing to the destination. Month abbreviations are uppercased (JAN, FEB…).</td>
+                <td style="font-family:monospace;font-size:.75rem"><span style="color:#fbbf24">2024-01-15</span> &#8594; <span style="color:#6ee7b7">15-JAN-2024</span><br><span style="color:#fbbf24">20240115</span> &#8594; <span style="color:#6ee7b7">01/15/2024</span></td>
+                <td style="font-size:.74rem;color:#7a8eaf">Source and destination store dates in different formats (ISO vs Oracle, US vs EU, compact vs delimited). See Date Format Tokens below.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CHAINING -->
+      <div style="margin-bottom:26px">
+        <div style="font-size:.71rem;font-weight:700;color:#818cf8;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #182040">Chaining Rules with |</div>
+        <div style="font-size:.77rem;color:#9aafc8;margin-bottom:12px;line-height:1.65">
+          Separate multiple rules with <span style="font-family:monospace;color:#a5b4fc;background:#0e1830;padding:1px 6px;border-radius:4px;border:1px solid #1e2d54">|</span> to apply them left-to-right in sequence. The output of each step feeds into the next. This lets you compose complex transformations from simple building blocks.
+        </div>
+        <div class="tbl-wrap" style="max-height:none">
+          <table>
+            <thead>
+              <tr><th style="width:32%">Rule Chain</th><th style="width:16%">Source Value</th><th style="width:32%">Step-by-Step</th><th style="width:20%">Final Result</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-family:monospace;font-size:.76rem;color:#a5b4fc">STRIP_PREFIX:CUST|NUMERIC</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#fbbf24">CUST001234</td>
+                <td style="font-size:.74rem;color:#9aafc8">1. Strip "CUST" &#8594; <span style="font-family:monospace">001234</span><br>2. NUMERIC &#8594; parse as number, drop leading zeros</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#6ee7b7">1234</td>
+              </tr>
+              <tr>
+                <td style="font-family:monospace;font-size:.76rem;color:#a5b4fc">STRIP_PREFIX:CD-|NUMERIC</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#fbbf24">CD-1000001</td>
+                <td style="font-size:.74rem;color:#9aafc8">1. Strip "CD-" &#8594; <span style="font-family:monospace">1000001</span><br>2. NUMERIC &#8594; already integer, unchanged</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#6ee7b7">1000001</td>
+              </tr>
+              <tr>
+                <td style="font-family:monospace;font-size:.76rem;color:#a5b4fc">STRIP_PREFIX:BR-|NUMERIC</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#fbbf24">BR-001</td>
+                <td style="font-size:.74rem;color:#9aafc8">1. Strip "BR-" &#8594; <span style="font-family:monospace">001</span><br>2. NUMERIC &#8594; drop leading zeros</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#6ee7b7">1</td>
+              </tr>
+              <tr>
+                <td style="font-family:monospace;font-size:.76rem;color:#a5b4fc">STRIP_PREFIX:CUST|ZEROPAD:12</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#fbbf24">CUST1001</td>
+                <td style="font-size:.74rem;color:#9aafc8">1. Strip "CUST" &#8594; <span style="font-family:monospace">1001</span><br>2. ZEROPAD:12 &#8594; pad left to 12 chars</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#6ee7b7">000000001001</td>
+              </tr>
+              <tr>
+                <td style="font-family:monospace;font-size:.76rem;color:#a5b4fc">STRIP_PREFIX:E|ZEROPAD:8</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#fbbf24">E4521</td>
+                <td style="font-size:.74rem;color:#9aafc8">1. Strip "E" &#8594; <span style="font-family:monospace">4521</span><br>2. ZEROPAD:8 &#8594; pad left to 8 chars</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#6ee7b7">00004521</td>
+              </tr>
+              <tr>
+                <td style="font-family:monospace;font-size:.76rem;color:#a5b4fc">ZEROPAD:10</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#fbbf24">1001</td>
+                <td style="font-size:.74rem;color:#9aafc8">1. ZEROPAD:10 &#8594; pad left to 10 chars (no prefix to strip)</td>
+                <td style="font-family:monospace;font-size:.76rem;color:#6ee7b7">0000001001</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DATE TOKENS -->
+      <div style="margin-bottom:26px">
+        <div style="font-size:.71rem;font-weight:700;color:#818cf8;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #182040">Date Format Tokens</div>
+        <div style="font-size:.77rem;color:#9aafc8;margin-bottom:12px">
+          Use these tokens in <span style="font-family:monospace;color:#a5b4fc;background:#0e1830;padding:2px 7px;border-radius:4px;border:1px solid #1e2d54">DATE_FORMAT:&lt;source_token&gt;-&gt;&lt;dest_token&gt;</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <span style="font-family:monospace;font-size:.75rem;color:#a5b4fc;background:#07102a;border:1px solid #1e2d54;border-radius:5px;padding:4px 10px">YYYY-MM-DD</span>
+          <span style="font-family:monospace;font-size:.75rem;color:#a5b4fc;background:#07102a;border:1px solid #1e2d54;border-radius:5px;padding:4px 10px">DD-MMM-YYYY</span>
+          <span style="font-family:monospace;font-size:.75rem;color:#a5b4fc;background:#07102a;border:1px solid #1e2d54;border-radius:5px;padding:4px 10px">MM/DD/YYYY</span>
+          <span style="font-family:monospace;font-size:.75rem;color:#a5b4fc;background:#07102a;border:1px solid #1e2d54;border-radius:5px;padding:4px 10px">DD/MM/YYYY</span>
+          <span style="font-family:monospace;font-size:.75rem;color:#a5b4fc;background:#07102a;border:1px solid #1e2d54;border-radius:5px;padding:4px 10px">YYYY/MM/DD</span>
+          <span style="font-family:monospace;font-size:.75rem;color:#a5b4fc;background:#07102a;border:1px solid #1e2d54;border-radius:5px;padding:4px 10px">YYYYMMDD</span>
+          <span style="font-family:monospace;font-size:.75rem;color:#a5b4fc;background:#07102a;border:1px solid #1e2d54;border-radius:5px;padding:4px 10px">DD-MM-YYYY</span>
+          <span style="font-family:monospace;font-size:.75rem;color:#a5b4fc;background:#07102a;border:1px solid #1e2d54;border-radius:5px;padding:4px 10px">MM-DD-YYYY</span>
+        </div>
+        <div class="tbl-wrap" style="max-height:none">
+          <table>
+            <thead><tr><th>Token</th><th>Format Description</th><th>Example</th><th>Common System</th></tr></thead>
+            <tbody>
+              <tr><td style="font-family:monospace;color:#a5b4fc">YYYY-MM-DD</td><td style="font-size:.76rem;color:#9aafc8">Year-Month-Day (ISO 8601)</td><td style="font-family:monospace;color:#6ee7b7">2024-01-15</td><td style="font-size:.74rem;color:#7a8eaf">REST APIs, PostgreSQL, MySQL, Python defaults</td></tr>
+              <tr><td style="font-family:monospace;color:#a5b4fc">DD-MMM-YYYY</td><td style="font-size:.76rem;color:#9aafc8">Day-MonthAbbr-Year (uppercased)</td><td style="font-family:monospace;color:#6ee7b7">15-JAN-2024</td><td style="font-size:.74rem;color:#7a8eaf">Oracle DB, banking core systems, SWIFT</td></tr>
+              <tr><td style="font-family:monospace;color:#a5b4fc">MM/DD/YYYY</td><td style="font-size:.76rem;color:#9aafc8">Month/Day/Year (US format)</td><td style="font-family:monospace;color:#6ee7b7">01/15/2024</td><td style="font-size:.74rem;color:#7a8eaf">US Excel exports, American legacy systems</td></tr>
+              <tr><td style="font-family:monospace;color:#a5b4fc">DD/MM/YYYY</td><td style="font-size:.76rem;color:#9aafc8">Day/Month/Year (European format)</td><td style="font-family:monospace;color:#6ee7b7">15/01/2024</td><td style="font-size:.74rem;color:#7a8eaf">UK/EU systems, SAP European instances</td></tr>
+              <tr><td style="font-family:monospace;color:#a5b4fc">YYYY/MM/DD</td><td style="font-size:.76rem;color:#9aafc8">Year/Month/Day with slashes</td><td style="font-family:monospace;color:#6ee7b7">2024/01/15</td><td style="font-size:.74rem;color:#7a8eaf">Some Asian systems, certain CSV exports</td></tr>
+              <tr><td style="font-family:monospace;color:#a5b4fc">YYYYMMDD</td><td style="font-size:.76rem;color:#9aafc8">Compact ISO (no separators)</td><td style="font-family:monospace;color:#6ee7b7">20240115</td><td style="font-size:.74rem;color:#7a8eaf">Mainframe exports, file naming, EDI</td></tr>
+              <tr><td style="font-family:monospace;color:#a5b4fc">DD-MM-YYYY</td><td style="font-size:.76rem;color:#9aafc8">Day-Month-Year with dashes</td><td style="font-family:monospace;color:#6ee7b7">15-01-2024</td><td style="font-size:.74rem;color:#7a8eaf">Some EU/AU legacy systems</td></tr>
+              <tr><td style="font-family:monospace;color:#a5b4fc">MM-DD-YYYY</td><td style="font-size:.76rem;color:#9aafc8">Month-Day-Year with dashes</td><td style="font-family:monospace;color:#6ee7b7">01-15-2024</td><td style="font-size:.74rem;color:#7a8eaf">Some US legacy systems</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px;font-size:.7rem;color:#7a8eaf;line-height:1.65;background:#07102a;border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:10px 14px">
+          <strong style="color:#fbbf24">Warning — ambiguous formats:</strong> MM/DD/YYYY and DD/MM/YYYY are indistinguishable when the day value is 12 or less (e.g. 01/06/2024 could be 1 Jun or 6 Jan). Use the correct token for your data to avoid silent mismatches.
+        </div>
+      </div>
+
+      <!-- REAL-WORLD EXAMPLES -->
+      <div>
+        <div style="font-size:.71rem;font-weight:700;color:#818cf8;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #182040">Real-World Examples — CD (Certificate of Deposit) Dataset</div>
+        <div style="font-size:.77rem;color:#9aafc8;margin-bottom:12px;line-height:1.65">
+          The table below shows all 14 column mappings from the CD sample dataset. Use it as a reference for how to combine rules to handle real migration scenarios.
+        </div>
+        <div class="tbl-wrap" style="max-height:none">
+          <table>
+            <thead>
+              <tr><th>Source Column</th><th>Destination Column</th><th>Rule</th><th>Source Example</th><th>&#8594; Result</th><th>Key?</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Customer_ID</td>
+                <td style="color:#c5d1e8;font-size:.76rem">cust_key</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc;white-space:nowrap">STRIP_PREFIX:CUST|NUMERIC</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">CUST001234</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">1234</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Strip "CUST" then drop leading zeros</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">CD_Number</td>
+                <td style="color:#c5d1e8;font-size:.76rem">cd_key</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc;white-space:nowrap">STRIP_PREFIX:CD-|NUMERIC</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">CD-1000001</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">1000001</td>
+                <td><span class="key-chip">KEY</span></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Primary record key — must be unique per row</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Issue_Date</td>
+                <td style="color:#c5d1e8;font-size:.76rem">issue_dt</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc;white-space:nowrap">DATE_FORMAT:YYYY-MM-DD-&gt;DD-MMM-YYYY</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">2024-01-15</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">15-JAN-2024</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">ISO &#8594; Oracle/banking format</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Term_Months</td>
+                <td style="color:#c5d1e8;font-size:.76rem">term_mo</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc">NUMERIC</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">12.00</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">12</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Decimal form vs integer — NUMERIC handles both</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Principal_Amount</td>
+                <td style="color:#c5d1e8;font-size:.76rem">principal_amt</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc">NUMERIC</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">10000.50</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">10000.5</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Tolerates minor floating-point rounding</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Interest_Rate</td>
+                <td style="color:#c5d1e8;font-size:.76rem">rate_pct</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc">NUMERIC</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">5.2500</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">5.25</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Extra trailing zeros stripped</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Interest_Payout_Frequency</td>
+                <td style="color:#c5d1e8;font-size:.76rem">payout_freq_cd</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc">VALUE_MAP</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">MONTHLY / QUARTERLY / AT_MATURITY</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">M / Q / A</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Descriptive text &#8594; short code</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Rate_Type</td>
+                <td style="color:#c5d1e8;font-size:.76rem">rate_type_cd</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc">VALUE_MAP</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">FIXED / VARIABLE</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">F / V</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Two-way lookup</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Auto_Renew</td>
+                <td style="color:#c5d1e8;font-size:.76rem">auto_renew_ind</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc">VALUE_MAP</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">YES / NO</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">1 / 0</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Boolean text &#8594; integer flag</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Status</td>
+                <td style="color:#c5d1e8;font-size:.76rem">status_cd</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc">VALUE_MAP</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">ACTIVE / MATURED / CLOSED</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">A / M / C</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Three-way lookup</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Branch_Code</td>
+                <td style="color:#c5d1e8;font-size:.76rem">branch_id</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc;white-space:nowrap">STRIP_PREFIX:BR-|NUMERIC</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">BR-001</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">1</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Strip dash-prefix, drop leading zeros</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Currency</td>
+                <td style="color:#c5d1e8;font-size:.76rem">ccy_cd</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc">DIRECT</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">USD</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">USD</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Identical in both — no transformation needed</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Interest_Accrual_Method</td>
+                <td style="color:#c5d1e8;font-size:.76rem">accrual_cd</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc">VALUE_MAP</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">30_360 / ACT_365</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">30360 / ACT365</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Underscore removed in destination code</td>
+              </tr>
+              <tr>
+                <td style="color:#c5d1e8;font-size:.76rem">Brokered_Flag</td>
+                <td style="color:#c5d1e8;font-size:.76rem">brokered_ind</td>
+                <td style="font-family:monospace;font-size:.73rem;color:#a5b4fc">VALUE_MAP</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#fbbf24">YES / NO</td>
+                <td style="font-family:monospace;font-size:.75rem;color:#6ee7b7">1 / 0</td>
+                <td></td>
+                <td style="font-size:.72rem;color:#7a8eaf">Boolean text &#8594; integer flag</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /rg-body -->
+  </div><!-- /rule guide card -->
 </div>
 
 <!-- VIEW DATA -->
@@ -2493,11 +2865,16 @@ COLUMN MAPPING FILE  (column_mapping.csv)
 
   Supported matching_rule values:
     DIRECT                          trim + case-insensitive string compare
+    TRIM                            strip leading/trailing whitespace only
+    UPPERCASE                       convert source to uppercase before compare
+    LOWERCASE                       convert source to lowercase before compare
     NUMERIC                         float compare within --tolerance
+    DECIMAL                         exact match ignoring trailing zeros  e.g. 1200.50 == 1200.5
     VALUE_MAP                       resolve via value_mapping.csv
     STRIP_PREFIX:<prefix>           strip leading prefix  e.g. STRIP_PREFIX:E
+    ZEROPAD:<length>                left-pad with zeros to N digits  e.g. ZEROPAD:12  (1001 → 000000001001)
     DATE_FORMAT:<src>-><dst>        convert date format  e.g. DATE_FORMAT:YYYY-MM-DD->DD-MMM-YYYY
-    Rules can be chained with |     e.g. STRIP_PREFIX:C-|NUMERIC
+    Rules can be chained with |     e.g. STRIP_PREFIX:CUST|ZEROPAD:12  or  TRIM|UPPERCASE
 
   Supported date format tokens:
     YYYY-MM-DD  DD-MMM-YYYY  MM/DD/YYYY  DD/MM/YYYY  YYYY/MM/DD  YYYYMMDD  DD-MM-YYYY  MM-DD-YYYY
