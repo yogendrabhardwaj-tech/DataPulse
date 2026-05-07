@@ -24,6 +24,9 @@ DEST_CLEAN_OUT = os.path.join(OUTDIR, "cd_destination_clean.csv")
 DEST_CORRUPT_OUT = os.path.join(OUTDIR, "cd_destination_corrupt.csv")
 SUMMARY_TXT_OUT = os.path.join(OUTDIR, "corruption_summary.txt")
 
+# CSV separator for source/destination files
+CSV_SEP = "|"  # set to '|' for pipe-delimited source/destination files
+
 # Composite key columns (logical)
 COMPOSITE_KEY_SOURCE = ["Customer_ID", "CD_Number", "Issue_Date"]
 COMPOSITE_KEY_DEST = ["cust_key", "cd_key", "issue_dt"]
@@ -35,7 +38,7 @@ NUM_TOL = 0.01
 # Helpers: transform + mapping
 # ----------------------------
 def load_files():
-    src = pd.read_csv(SOURCE_CSV)
+    src = pd.read_csv(SOURCE_CSV, sep=CSV_SEP)
     colmap = pd.read_csv(COLUMN_MAPPING_CSV)
     valmap = pd.read_csv(VALUE_MAPPING_CSV)
     return src, colmap, valmap
@@ -387,8 +390,8 @@ def main():
     type2_rows, type2_changes = inject_partial_on_specific_rows(dest_corrupt, type2_idx, COMPOSITE_KEY_DEST)
 
     # Save outputs
-    dest_clean.to_csv(DEST_CLEAN_OUT, index=False)
-    dest_corrupt.to_csv(DEST_CORRUPT_OUT, index=False)
+    dest_clean.to_csv(DEST_CLEAN_OUT, sep=CSV_SEP, index=False)
+    dest_corrupt.to_csv(DEST_CORRUPT_OUT, sep=CSV_SEP, index=False)
 
     params = {
         "pct_value_mismatch": pct_value_mismatch,
