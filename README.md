@@ -6,7 +6,7 @@ DataPulse is a zero-dependency Python engine that compares any source and destin
 
 ---
 
-## Why Teams Use DataPulse
+## Why Teams Use DataPulse?
 
 Data migrations fail silently. Records go missing. Codes get mapped wrong. Dates arrive in the wrong format. By the time someone notices, the damage is already downstream. DataPulse was built to catch all of that — automatically, before it reaches production.
 

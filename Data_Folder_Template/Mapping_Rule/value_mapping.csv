@@ -1,15 +1,1 @@
 column_name,source_value,destination_value,rule_description
-Interest_Payout_Frequency,MONTHLY,M,Monthly interest payout
-Interest_Payout_Frequency,QUARTERLY,Q,Quarterly interest payout
-Interest_Payout_Frequency,AT_MATURITY,A,Interest paid at maturity
-Rate_Type,FIXED,F,Fixed rate CD
-Rate_Type,VARIABLE,V,Variable rate CD
-Auto_Renew,YES,1,Auto-renewal enabled
-Auto_Renew,NO,0,Auto-renewal disabled
-Status,ACTIVE,A,CD is currently active
-Status,MATURED,M,CD has matured
-Status,CLOSED,C,CD has been closed
-Interest_Accrual_Method,30_360,30360,30/360 day count convention
-Interest_Accrual_Method,ACT_365,ACT365,Actual/365 day count convention
-Brokered_Flag,YES,1,Brokered CD
-Brokered_Flag,NO,0,Non-brokered CD

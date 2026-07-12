@@ -15,7 +15,12 @@
       "Bash(cp Data_Student/employee_source.csv Data_Student/Source/)",
       "Bash(cp Data_Student/employee_destination.csv Data_Student/Destination/)",
       "Bash(git add:*)",
-      "Bash(git commit -m ':*)"
+      "Bash(git commit -m ':*)",
+      "Bash(C:\\\\dp\\\\Scripts\\\\pip install:*)",
+      "Bash(cmd /c \"C:\\\\dp\\\\Scripts\\\\pip.exe install streamlit pandas\")",
+      "Bash(cmd:*)",
+      "Bash(powershell -Command \"& 'C:\\\\dp\\\\Scripts\\\\pip.exe' install streamlit pandas 2>&1\")",
+      "Bash(where streamlit *)"
     ]
   }
 }
